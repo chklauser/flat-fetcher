@@ -1,3 +1,16 @@
+// Copyright 2020 Christian Klauser
+//
+// Licensed under the Apache License,Version2.0(the"License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,software
+// distributed under the License is distributed on an"AS IS"BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package link.klauser.flatfetcher;
 
 import java.io.Serializable;
@@ -13,15 +26,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.internal.SessionImpl;
 import org.hibernate.persister.entity.UniqueKeyLoadable;
-import org.springframework.lang.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @Slf4j
+@NotNull
 abstract class Accessor<X, A> {
 
 	@Nullable
-	abstract A get(X owner);
+	abstract A get(@NotNull X owner);
 
-	void set(EntityManager entityManager, X owner, @Nullable A value) {
+	void set(@NotNull EntityManager entityManager, @NotNull X owner, @Nullable A value) {
 		set(owner, value);
 		setLoadedStatus(entityManager, owner, value);
 	}
@@ -30,11 +45,14 @@ abstract class Accessor<X, A> {
 
 	abstract Attribute<X, A> attr();
 
+	@NotNull
 	public SingularAttribute<X, A> singularAttr() {
 		// This is type-safe because IF `attr` is a `SingularAttribute`, then the only `SingularAttribute` it can be, is a
 		// `SingularAttribute<X, A>`.
 		return (SingularAttribute<X, A>) attr();
 	}
+
+	@NotNull
 	public PluralAttribute<X, A, ?> pluralAttr() {
 		// This is type-safe because IF `attr` is a `PluralAttribute`, then the only `PluralAttribute` it can be, is a
 		// `PluralAttribute<X, A, ?>`.
@@ -42,7 +60,7 @@ abstract class Accessor<X, A> {
 	}
 
 	@SuppressWarnings("unchecked")
-	static <C, K extends Serializable> Accessor<? super C, K> forIdOf(Attribute<? super C, ?> associationAttr) {
+	static <C, K extends Serializable> @NotNull Accessor<? super C, K> forIdOf(@NotNull Attribute<? super C, ?> associationAttr) {
 		Attribute<? super C, ?> idAttribute;
 		var inferredAttributeName = associationAttr.getName() + "Id";
 		try {
@@ -56,13 +74,13 @@ abstract class Accessor<X, A> {
 		return of((Attribute<C, K>) idAttribute);
 	}
 
-	static <C> Accessor<? super C, ?> forPrimaryKeyOf(EntityType<? super C> entity) {
+	static <C> @NotNull Accessor<? super C, ?> forPrimaryKeyOf(@NotNull EntityType<? super C> entity) {
 		var idAttr = entity.getId(entity.getIdType().getJavaType());
 		return of(idAttr);
 	}
 
 	@SneakyThrows
-	static <C, T> Accessor<? super C, T> of(Attribute<? super C, T> attr) {
+	static <C, T> @NotNull Accessor<? super C, T> of(@NotNull Attribute<? super C, T> attr) {
 		var m = attr.getJavaMember();
 		if (m instanceof Field) {
 			var field = (Field) m;
@@ -71,7 +89,7 @@ abstract class Accessor<X, A> {
 				@SuppressWarnings("unchecked")
 				@Override
 				@SneakyThrows
-				public T get(C owner) {
+				public T get(@NotNull C owner) {
 					return (T) field.get(owner);
 				}
 
@@ -105,7 +123,7 @@ abstract class Accessor<X, A> {
 				@SuppressWarnings("unchecked")
 				@SneakyThrows
 				@Override
-				public T get(C owner) {
+				public T get(@NotNull C owner) {
 					return (T) getter.invoke(owner);
 				}
 
@@ -133,7 +151,7 @@ abstract class Accessor<X, A> {
 		throw new FlatFetcherException("Members of type " + m.getClass().getSimpleName() + " are not supported.");
 	}
 
-	void setLoadedStatus(EntityManager em, X owner, @Nullable A value) {
+	void setLoadedStatus(@NotNull EntityManager em, X owner, @Nullable A value) {
 		var session = (SessionImpl) em.getDelegate();
 		if(!session.contains(owner)){
 			return;

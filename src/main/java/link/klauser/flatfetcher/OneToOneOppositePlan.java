@@ -1,3 +1,17 @@
+// Copyright 2020 Christian Klauser
+//
+// Licensed under the Apache License,Version2.0(the"License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,software
+// distributed under the License is distributed on an"AS IS"BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package link.klauser.flatfetcher;
 
 import java.io.Serializable;
@@ -13,9 +27,11 @@ import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.SingularAttribute;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
-public class OneToOneOppositePlan<X, A, K extends Serializable> implements FetchPlan<X, A> {
+@NotNull
+class OneToOneOppositePlan<X, A, K extends Serializable> implements FetchPlan<X, A> {
 	final EntityType<A> targetType;
 	final Accessor<? super X, A> rootField;
 	final Accessor<? super A, X> mappedByAccessor;
@@ -49,7 +65,7 @@ public class OneToOneOppositePlan<X, A, K extends Serializable> implements Fetch
 	}
 
 	@Override
-	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
+	public @NotNull Collection<A> fetch(@NotNull EntityManager em, @NotNull Collection<? extends X> roots) {
 		// select t from Target t where t.mappedBy in (:roots)
 		var cb = em.getCriteriaBuilder();
 		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());

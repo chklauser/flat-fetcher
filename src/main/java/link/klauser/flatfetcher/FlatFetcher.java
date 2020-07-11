@@ -1,3 +1,17 @@
+// Copyright 2020 Christian Klauser
+//
+// Licensed under the Apache License,Version2.0(the"License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,software
+// distributed under the License is distributed on an"AS IS"BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package link.klauser.flatfetcher;
 
 import java.util.ArrayList;
@@ -13,35 +27,49 @@ import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @RequiredArgsConstructor
 @Slf4j
 public class FlatFetcher {
 
+	@lombok.NonNull
+	@NotNull
 	final EntityManager em;
 
 	@Value
+	@NotNull
 	static class PlanKey {
 		@lombok.NonNull
+		@NotNull
+
 		EntityType<?> entityType;
+		@lombok.NonNull
+		@NotNull
 		String attributeName;
 	}
 
 	interface FetchNode<X> {
+
+		@NotNull
 		String name();
+
+		@NotNull
 		Class<X> tag();
+
+		@NotNull
 		List<AttributeNode<?>> attributeNodes();
+
+		@NotNull
 		Collection<X> roots();
 	}
 
 	@SuppressWarnings("rawtypes")
 	final ConcurrentHashMap<PlanKey, FetchPlan> attributePlanCache = new ConcurrentHashMap<>();
 
-	@SneakyThrows
-	public <X> void fetch(Class<X> tag, Collection<X> roots, String entityGraphName) {
+	public <X> void fetch(@NotNull Class<X> tag, @NotNull Collection<X> roots, @NotNull String entityGraphName) {
 		if (roots.isEmpty()) {
 			return;
 		}
@@ -54,22 +82,22 @@ public class FlatFetcher {
 		List<FetchNode<?>> fetchQueue = new ArrayList<>();
 		fetchQueue.add(new FetchNode<X>() {
 			@Override
-			public String name() {
+			public @NotNull String name() {
 				return entityGraphName;
 			}
 
 			@Override
-			public Class<X> tag() {
+			public @NotNull Class<X> tag() {
 				return tag;
 			}
 
 			@Override
-			public List<AttributeNode<?>> attributeNodes() {
+			public @NotNull List<AttributeNode<?>> attributeNodes() {
 				return graph.getAttributeNodes();
 			}
 
 			@Override
-			public Collection<X> roots() {
+			public @NotNull Collection<X> roots() {
 				return roots;
 			}
 		});
@@ -77,7 +105,7 @@ public class FlatFetcher {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void fetchRecursively(List<FetchNode<?>> fetchQueue) {
+	private void fetchRecursively(@NotNull List<FetchNode<?>> fetchQueue) {
 		var fetchNodeIndex = 0;
 		while(fetchNodeIndex < fetchQueue.size()){
 			var fetchNode = fetchQueue.get(fetchNodeIndex);
@@ -96,8 +124,8 @@ public class FlatFetcher {
 		}
 	}
 
-	private <X, A> void fetchAttribute(List<FetchNode<?>> fetchQueue, FetchNode<X> fetchNode,
-			EntityType<X> currentRootType, AttributeNode<A> attributeNode) {
+	private <X, A> void fetchAttribute(@NotNull List<FetchNode<?>> fetchQueue, FetchNode<X> fetchNode,
+			@NotNull EntityType<X> currentRootType, @NotNull AttributeNode<A> attributeNode) {
 		FetchPlan<X, A> planForNode = fetchPlanFor(currentRootType, attributeNode);
 		var subRoots = planForNode.fetch(em, fetchNode.roots());
 		if(!subRoots.isEmpty()) {
@@ -109,24 +137,24 @@ public class FlatFetcher {
 				// doesn't have any impact.
 				fetchQueue.add(new FetchNode<A>() {
 					@Override
-					public String name() {
+					public @NotNull String name() {
 						return subgraphName;
 					}
 
 					@SuppressWarnings("unchecked")
 					@Override
-					public Class<A> tag() {
+					public @NotNull Class<A> tag() {
 						return subgraphEntry.getKey();
 					}
 
 					@SuppressWarnings("unchecked")
 					@Override
-					public List<AttributeNode<?>> attributeNodes() {
+					public @NotNull List<AttributeNode<?>> attributeNodes() {
 						return subgraphEntry.getValue().getAttributeNodes();
 					}
 
 					@Override
-					public Collection<A> roots() {
+					public @NotNull Collection<A> roots() {
 						return subRoots;
 					}
 				});
@@ -135,7 +163,7 @@ public class FlatFetcher {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <X, A> FetchPlan<X, A> fetchPlanFor(EntityType<X> rootType, AttributeNode<A> attributeNode) {
+	private <X, A> FetchPlan<X, A> fetchPlanFor(@NotNull EntityType<X> rootType, @NotNull AttributeNode<A> attributeNode) {
 		return attributePlanCache.computeIfAbsent(new PlanKey(rootType, attributeNode.getAttributeName()), k -> {
 			if(log.isDebugEnabled()) {
 				log.debug("Preparing fetch plan for JPA attribute {}#{}", rootType.getName(), attributeNode.getAttributeName());
@@ -158,7 +186,7 @@ public class FlatFetcher {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <X, A> FetchPlan<X, A> planForOneToOneAttr(EntityType<X> rootType, SingularAttribute<? super X, A> fetchAttr) {
+	private <X, A> FetchPlan<X, A> planForOneToOneAttr(@NotNull EntityType<X> rootType, @NotNull SingularAttribute<? super X, A> fetchAttr) {
 		var oneToOneAnnotation = PlanUtils.findAnnotation(fetchAttr, OneToOne.class);
 		if (!oneToOneAnnotation.mappedBy().isBlank()) {
 			return new OneToOneOppositePlan(rootType, fetchAttr, oneToOneAnnotation);

@@ -1,4 +1,5 @@
 # Flat Fetcher - Teach Hibernate to fetch graphs without joins
+![CI matser](https://github.com/chklauser/flat-fetcher/workflows/CI/badge.svg?branch=master)
 
 A library that takes a list of "root" entities and a named entity graph and bulk-fetches the graph  without joins. An example
 trace would look like this:
