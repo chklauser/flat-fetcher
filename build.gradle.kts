@@ -44,7 +44,6 @@ tasks.test {
 
 dependencies {
     api("jakarta.persistence:jakarta.persistence-api:2.2.3")
-    api("org.jetbrains:annotations:19.0.0")
     compileOnly("org.hibernate:hibernate-core:5.4.18.Final")
     implementation("org.slf4j:slf4j-api:1.7.30")
 

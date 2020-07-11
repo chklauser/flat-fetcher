@@ -17,8 +17,6 @@ package link.klauser.flatfetcher;
 import java.io.Serializable;
 import javax.persistence.metamodel.Attribute;
 
-import org.jetbrains.annotations.Nullable;
-
 
 public class FlatFetcherException extends RuntimeException implements Serializable {
 
@@ -26,11 +24,11 @@ public class FlatFetcherException extends RuntimeException implements Serializab
 		super(message);
 	}
 
-	FlatFetcherException(String message, @Nullable Throwable cause) {
+	FlatFetcherException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	FlatFetcherException(String message, @Nullable Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	FlatFetcherException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
@@ -38,7 +36,7 @@ public class FlatFetcherException extends RuntimeException implements Serializab
 		return onAttr(msg, metaAttr, null);
 	}
 
-	static FlatFetcherException onAttr(String msg, Attribute<?, ?> metaAttr, @Nullable Throwable cause) {
+	static FlatFetcherException onAttr(String msg, Attribute<?, ?> metaAttr, Throwable cause) {
 		return new FlatFetcherException(msg +
 				PlanUtils.shortAttrDescription(metaAttr), cause);
 	}

@@ -26,33 +26,27 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.internal.SessionImpl;
 import org.hibernate.persister.entity.UniqueKeyLoadable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @Slf4j
-@NotNull
 abstract class Accessor<X, A> {
 
-	@Nullable
-	abstract A get(@NotNull X owner);
+	abstract A get(X owner);
 
-	void set(@NotNull EntityManager entityManager, @NotNull X owner, @Nullable A value) {
+	void set(EntityManager entityManager, X owner, A value) {
 		set(owner, value);
 		setLoadedStatus(entityManager, owner, value);
 	}
 
-	protected abstract void set(X owner, @Nullable A value);
+	protected abstract void set(X owner, A value);
 
 	abstract Attribute<X, A> attr();
 
-	@NotNull
 	public SingularAttribute<X, A> singularAttr() {
 		// This is type-safe because IF `attr` is a `SingularAttribute`, then the only `SingularAttribute` it can be, is a
 		// `SingularAttribute<X, A>`.
 		return (SingularAttribute<X, A>) attr();
 	}
 
-	@NotNull
 	public PluralAttribute<X, A, ?> pluralAttr() {
 		// This is type-safe because IF `attr` is a `PluralAttribute`, then the only `PluralAttribute` it can be, is a
 		// `PluralAttribute<X, A, ?>`.
@@ -60,7 +54,7 @@ abstract class Accessor<X, A> {
 	}
 
 	@SuppressWarnings("unchecked")
-	static <C, K extends Serializable> @NotNull Accessor<? super C, K> forIdOf(@NotNull Attribute<? super C, ?> associationAttr) {
+	static <C, K extends Serializable> Accessor<? super C, K> forIdOf(Attribute<? super C, ?> associationAttr) {
 		Attribute<? super C, ?> idAttribute;
 		var inferredAttributeName = associationAttr.getName() + "Id";
 		try {
@@ -74,13 +68,13 @@ abstract class Accessor<X, A> {
 		return of((Attribute<C, K>) idAttribute);
 	}
 
-	static <C> @NotNull Accessor<? super C, ?> forPrimaryKeyOf(@NotNull EntityType<? super C> entity) {
+	static <C> Accessor<? super C, ?> forPrimaryKeyOf(EntityType<? super C> entity) {
 		var idAttr = entity.getId(entity.getIdType().getJavaType());
 		return of(idAttr);
 	}
 
 	@SneakyThrows
-	static <C, T> @NotNull Accessor<? super C, T> of(@NotNull Attribute<? super C, T> attr) {
+	static <C, T> Accessor<? super C, T> of(Attribute<? super C, T> attr) {
 		var m = attr.getJavaMember();
 		if (m instanceof Field) {
 			var field = (Field) m;
@@ -89,7 +83,7 @@ abstract class Accessor<X, A> {
 				@SuppressWarnings("unchecked")
 				@Override
 				@SneakyThrows
-				public T get(@NotNull C owner) {
+				public T get(C owner) {
 					return (T) field.get(owner);
 				}
 
@@ -123,7 +117,7 @@ abstract class Accessor<X, A> {
 				@SuppressWarnings("unchecked")
 				@SneakyThrows
 				@Override
-				public T get(@NotNull C owner) {
+				public T get(C owner) {
 					return (T) getter.invoke(owner);
 				}
 
@@ -151,7 +145,7 @@ abstract class Accessor<X, A> {
 		throw new FlatFetcherException("Members of type " + m.getClass().getSimpleName() + " are not supported.");
 	}
 
-	void setLoadedStatus(@NotNull EntityManager em, X owner, @Nullable A value) {
+	void setLoadedStatus(EntityManager em, X owner, A value) {
 		var session = (SessionImpl) em.getDelegate();
 		if(!session.contains(owner)){
 			return;

@@ -32,9 +32,6 @@ import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
-import org.jetbrains.annotations.NotNull;
-
-@NotNull
 class OneToManyPlan<X, C extends Collection<A>, A, K extends Serializable> implements FetchPlan<X, A> {
 
 	final PluralAttribute<? super X, C, A> fetchAttr;
@@ -75,7 +72,7 @@ class OneToManyPlan<X, C extends Collection<A>, A, K extends Serializable> imple
 	}
 
 	@Override
-	public @NotNull Collection<A> fetch(@NotNull EntityManager em, @NotNull Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
 		var cb = em.getCriteriaBuilder();
 		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
 		Root<A> fromTarget = assocQ.from(targetType.getJavaType());

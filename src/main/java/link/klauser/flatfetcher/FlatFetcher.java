@@ -29,47 +29,38 @@ import javax.persistence.metamodel.SingularAttribute;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 @RequiredArgsConstructor
 @Slf4j
 public class FlatFetcher {
 
 	@lombok.NonNull
-	@NotNull
 	final EntityManager em;
 
 	@Value
-	@NotNull
 	static class PlanKey {
 		@lombok.NonNull
-		@NotNull
 
 		EntityType<?> entityType;
 		@lombok.NonNull
-		@NotNull
 		String attributeName;
 	}
 
 	interface FetchNode<X> {
 
-		@NotNull
 		String name();
 
-		@NotNull
 		Class<X> tag();
 
-		@NotNull
 		List<AttributeNode<?>> attributeNodes();
 
-		@NotNull
 		Collection<X> roots();
 	}
 
 	@SuppressWarnings("rawtypes")
 	final ConcurrentHashMap<PlanKey, FetchPlan> attributePlanCache = new ConcurrentHashMap<>();
 
-	public <X> void fetch(@NotNull Class<X> tag, @NotNull Collection<X> roots, @NotNull String entityGraphName) {
+	public <X> void fetch(Class<X> tag, Collection<X> roots, String entityGraphName) {
 		if (roots.isEmpty()) {
 			return;
 		}
@@ -82,22 +73,22 @@ public class FlatFetcher {
 		List<FetchNode<?>> fetchQueue = new ArrayList<>();
 		fetchQueue.add(new FetchNode<X>() {
 			@Override
-			public @NotNull String name() {
+			public String name() {
 				return entityGraphName;
 			}
 
 			@Override
-			public @NotNull Class<X> tag() {
+			public Class<X> tag() {
 				return tag;
 			}
 
 			@Override
-			public @NotNull List<AttributeNode<?>> attributeNodes() {
+			public List<AttributeNode<?>> attributeNodes() {
 				return graph.getAttributeNodes();
 			}
 
 			@Override
-			public @NotNull Collection<X> roots() {
+			public Collection<X> roots() {
 				return roots;
 			}
 		});
@@ -105,7 +96,7 @@ public class FlatFetcher {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void fetchRecursively(@NotNull List<FetchNode<?>> fetchQueue) {
+	private void fetchRecursively(List<FetchNode<?>> fetchQueue) {
 		var fetchNodeIndex = 0;
 		while(fetchNodeIndex < fetchQueue.size()){
 			var fetchNode = fetchQueue.get(fetchNodeIndex);
@@ -124,8 +115,8 @@ public class FlatFetcher {
 		}
 	}
 
-	private <X, A> void fetchAttribute(@NotNull List<FetchNode<?>> fetchQueue, FetchNode<X> fetchNode,
-			@NotNull EntityType<X> currentRootType, @NotNull AttributeNode<A> attributeNode) {
+	private <X, A> void fetchAttribute(List<FetchNode<?>> fetchQueue, FetchNode<X> fetchNode,
+			EntityType<X> currentRootType, AttributeNode<A> attributeNode) {
 		FetchPlan<X, A> planForNode = fetchPlanFor(currentRootType, attributeNode);
 		var subRoots = planForNode.fetch(em, fetchNode.roots());
 		if(!subRoots.isEmpty()) {
@@ -137,24 +128,24 @@ public class FlatFetcher {
 				// doesn't have any impact.
 				fetchQueue.add(new FetchNode<A>() {
 					@Override
-					public @NotNull String name() {
+					public String name() {
 						return subgraphName;
 					}
 
 					@SuppressWarnings("unchecked")
 					@Override
-					public @NotNull Class<A> tag() {
+					public Class<A> tag() {
 						return subgraphEntry.getKey();
 					}
 
 					@SuppressWarnings("unchecked")
 					@Override
-					public @NotNull List<AttributeNode<?>> attributeNodes() {
+					public List<AttributeNode<?>> attributeNodes() {
 						return subgraphEntry.getValue().getAttributeNodes();
 					}
 
 					@Override
-					public @NotNull Collection<A> roots() {
+					public Collection<A> roots() {
 						return subRoots;
 					}
 				});
@@ -163,7 +154,7 @@ public class FlatFetcher {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <X, A> FetchPlan<X, A> fetchPlanFor(@NotNull EntityType<X> rootType, @NotNull AttributeNode<A> attributeNode) {
+	private <X, A> FetchPlan<X, A> fetchPlanFor(EntityType<X> rootType, AttributeNode<A> attributeNode) {
 		return attributePlanCache.computeIfAbsent(new PlanKey(rootType, attributeNode.getAttributeName()), k -> {
 			if(log.isDebugEnabled()) {
 				log.debug("Preparing fetch plan for JPA attribute {}#{}", rootType.getName(), attributeNode.getAttributeName());
@@ -186,7 +177,7 @@ public class FlatFetcher {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <X, A> FetchPlan<X, A> planForOneToOneAttr(@NotNull EntityType<X> rootType, @NotNull SingularAttribute<? super X, A> fetchAttr) {
+	private <X, A> FetchPlan<X, A> planForOneToOneAttr(EntityType<X> rootType, SingularAttribute<? super X, A> fetchAttr) {
 		var oneToOneAnnotation = PlanUtils.findAnnotation(fetchAttr, OneToOne.class);
 		if (!oneToOneAnnotation.mappedBy().isBlank()) {
 			return new OneToOneOppositePlan(rootType, fetchAttr, oneToOneAnnotation);

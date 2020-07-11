@@ -27,10 +27,8 @@ import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.SingularAttribute;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 @Slf4j
-@NotNull
 class OneToOneOppositePlan<X, A, K extends Serializable> implements FetchPlan<X, A> {
 	final EntityType<A> targetType;
 	final Accessor<? super X, A> rootField;
@@ -65,7 +63,7 @@ class OneToOneOppositePlan<X, A, K extends Serializable> implements FetchPlan<X,
 	}
 
 	@Override
-	public @NotNull Collection<A> fetch(@NotNull EntityManager em, @NotNull Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
 		// select t from Target t where t.mappedBy in (:roots)
 		var cb = em.getCriteriaBuilder();
 		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());

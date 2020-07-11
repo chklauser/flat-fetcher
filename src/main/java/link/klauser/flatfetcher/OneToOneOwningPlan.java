@@ -29,10 +29,8 @@ import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.SingularAttribute;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 @Slf4j
-@NotNull
 class OneToOneOwningPlan<X, A, K extends Serializable> implements FetchPlan<X, A> {
 	final EntityType<A> targetType;
 	final Accessor<? super X, A> rootField;
@@ -89,7 +87,7 @@ class OneToOneOwningPlan<X, A, K extends Serializable> implements FetchPlan<X, A
 	}
 
 	@Override
-	public @NotNull Collection<A> fetch(@NotNull EntityManager em, @NotNull Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
 		Map<K, A> byId = new HashMap<>();
 		var cb = em.getCriteriaBuilder();
 		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());

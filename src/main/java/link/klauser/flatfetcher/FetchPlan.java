@@ -17,11 +17,7 @@ package link.klauser.flatfetcher;
 import java.util.Collection;
 import javax.persistence.EntityManager;
 
-import org.jetbrains.annotations.NotNull;
-
 @FunctionalInterface
-@NotNull
 interface FetchPlan<X, A> {
-	@NotNull
-	Collection<A> fetch(@NotNull EntityManager em, @NotNull Collection<? extends X> roots);
+	Collection<A> fetch(EntityManager em, Collection<? extends X> roots);
 }

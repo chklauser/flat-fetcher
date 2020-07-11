@@ -30,9 +30,6 @@ import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
-import org.jetbrains.annotations.NotNull;
-
-@NotNull
 final class PlanUtils {
 
 	private PlanUtils() {
