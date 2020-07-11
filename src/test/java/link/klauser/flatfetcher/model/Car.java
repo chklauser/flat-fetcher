@@ -14,7 +14,6 @@ import javax.persistence.NamedEntityGraph;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
-import link.klauser.flatfetcher.BaseEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

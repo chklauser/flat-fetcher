@@ -89,4 +89,8 @@ final class PlanUtils {
 		}
 		return referencedColumnAccessor;
 	}
+
+	static String shortAttrDescription(Attribute<?, ?> metaAttr) {
+		return metaAttr.getDeclaringType().getJavaType().getSimpleName() + "#" + metaAttr.getJavaMember().getName();
+	}
 }

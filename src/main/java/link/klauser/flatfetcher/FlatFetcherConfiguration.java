@@ -1,9 +1,14 @@
 package link.klauser.flatfetcher;
 
-import org.springframework.context.annotation.ComponentScan;
+import javax.persistence.EntityManager;
+
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan(basePackageClasses = FlatFetcherConfiguration.class)
 public class FlatFetcherConfiguration {
+	@Bean
+	public FlatFetcher flatFetcher(EntityManager em) {
+		return new FlatFetcher(em);
+	}
 }

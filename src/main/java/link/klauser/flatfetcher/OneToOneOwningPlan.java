@@ -17,7 +17,7 @@ import javax.persistence.metamodel.SingularAttribute;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class OneToOneOwningPlan<X extends BaseEntity, A extends BaseEntity, K extends Serializable> implements FetchPlan<X> {
+public class OneToOneOwningPlan<X, A, K extends Serializable> implements FetchPlan<X, A> {
 	final EntityType<A> targetType;
 	final Accessor<? super X, A> rootField;
 	final Accessor<? super A, X> mappedByAccessor;
@@ -73,7 +73,7 @@ public class OneToOneOwningPlan<X extends BaseEntity, A extends BaseEntity, K ex
 	}
 
 	@Override
-	public void fetch(EntityManager em, Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
 		Map<K, A> byId = new HashMap<>();
 		var cb = em.getCriteriaBuilder();
 		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
@@ -96,5 +96,6 @@ public class OneToOneOwningPlan<X extends BaseEntity, A extends BaseEntity, K ex
 				mappedByAccessor.set(em, associatedEntity, root);
 			}
 		}
+		return byId.values();
 	}
 }

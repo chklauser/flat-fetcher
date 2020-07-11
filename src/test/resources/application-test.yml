@@ -4,10 +4,11 @@ logging.level:
   org.hibernate: ${hibernateloglevel}
   org.hibernate.SQL: debug
   org.hibernate.type: ${hibernateloglevel}
-  link.klauser.flatfetcher: info
+  link.klauser.flatfetcher: debug
 
 spring.datasource.url: jdbc:h2:~/flatfetcher;AUTO_SERVER=TRUE
 spring.datasource.driverClassName: org.h2.Driver
 spring.datasource.username: sa
 spring.datasource.password: sa
 spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+spring.jpa.open-in-view: false

@@ -11,6 +11,7 @@ import link.klauser.flatfetcher.model.Door;
 import link.klauser.flatfetcher.model.Engine;
 import link.klauser.flatfetcher.model.Wheel;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +23,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+@SuppressWarnings("CodeBlock2Expr")
 @ExtendWith(SpringExtension.class)
 @Transactional(propagation = NOT_SUPPORTED)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = "spring.datasource.url=jdbc:h2:~/flatfetcher;AUTO_SERVER=TRUE")
@@ -31,6 +33,10 @@ public class FlatFetcherTest {
 
 	@Autowired
 	private PlatformTransactionManager transactionManager;
+
+	@Autowired
+	private StatementInterceptor statementInterceptor;
+
 	private TransactionTemplate rwTx;
 	private TransactionTemplate roTx;
 
@@ -39,6 +45,19 @@ public class FlatFetcherTest {
 		rwTx = new TransactionTemplate(transactionManager);
 		roTx = new TransactionTemplate(transactionManager);
 		roTx.setReadOnly(true);
+		rwTx.executeWithoutResult(s -> {
+			deleteAll(Door.class);
+			deleteAll(Wheel.class);
+			deleteAll(Car.class);
+			deleteAll(Engine.class);
+		});
+	}
+
+	private <X> void deleteAll(Class<X> entityType) {
+		var cb = em.getCriteriaBuilder();
+		var deleteQ = cb.createCriteriaDelete(entityType);
+		deleteQ.from(entityType);
+		em.createQuery(deleteQ).executeUpdate();
 	}
 
 	@Autowired
@@ -58,18 +77,22 @@ public class FlatFetcherTest {
 		///// GIVEN ////
 		testData1();
 
+		statementInterceptor.reset();
 		log.info("Test data set up; Fetching roots...");
 		var rootCars = rwTx.execute(status ->
 				em.createQuery("select c from Car c", Car.class).getResultList()
 		);
+		var rootStmts = statementInterceptor.getPreparedStatements();
 		assertThat(rootCars).as("rootCars").isNotNull();
 
 		///// WHEN /////
+		statementInterceptor.reset();
 		log.info("Roots fetched; fetching graph...");
 		rwTx.executeWithoutResult(status -> {
 			flatFetcher.fetch(Car.class, rootCars, "full");
 		});
 		log.info("Done fetching graph.");
+		var fetchStmts = statementInterceptor.getPreparedStatements();
 
 		///// THEN /////
 		assertThat(rootCars).allSatisfy(rootCar -> {
@@ -77,24 +100,39 @@ public class FlatFetcherTest {
 			assertThat(rootCar.getWheels()).isNotEmpty().hasSizeLessThanOrEqualTo(4);
 			assertThat(rootCar.getEngine()).isNotNull();
 		});
+
+		SoftAssertions.assertSoftly(s -> {
+			s.assertThat(rootStmts).as("SQL statements to fetch roots")
+					.hasSize(1);
+			s.assertThat(fetchStmts).as("SQL statements to fetch graph")
+					.hasSize(3);
+		});
+
 	}
 
 	@Test
 	void fetchFullGraphFromEngines() {
 		///// GIVEN ////
 		testData1();
+
+		statementInterceptor.reset();
 		log.info("Test data set up; Fetching roots...");
-		var rootEngines = rwTx.execute(status ->
-				em.createQuery("select e from Engine e", Engine.class).getResultList()
-		);
+		var rootEngines = rwTx.execute(status -> {
+			var result = em.createQuery("select e from Engine e", Engine.class).getResultList();
+			result.forEach(em::detach);
+			return result;
+		});
+		var rootStmts = statementInterceptor.getPreparedStatements();
 		assertThat(rootEngines).as("rootEngines").isNotNull();
 
 		///// WHEN /////
+		statementInterceptor.reset();
 		log.info("Roots fetched; fetching graph...");
 		roTx.executeWithoutResult(status -> {
 			flatFetcher.fetch(Engine.class, rootEngines, "EngineEntity.full");
 		});
 		log.info("Done fetching graph.");
+		var fetchStmts = statementInterceptor.getPreparedStatements();
 
 		///// THEN /////
 		assertThat(rootEngines).allSatisfy(rootEngine -> {
@@ -103,6 +141,13 @@ public class FlatFetcherTest {
 			assertThat(car.getDoors()).isNotEmpty().hasSizeLessThanOrEqualTo(5);
 			assertThat(car.getWheels()).isNotEmpty().hasSizeLessThanOrEqualTo(4);
 			assertThat(car.getEngine()).isNotNull();
+		});
+
+		SoftAssertions.assertSoftly(s -> {
+			s.assertThat(rootStmts).as("SQL statements to fetch roots")
+					.hasSize(1);
+			s.assertThat(fetchStmts).as("SQL statements to fetch graph")
+					.hasSize(3);
 		});
 	}
 

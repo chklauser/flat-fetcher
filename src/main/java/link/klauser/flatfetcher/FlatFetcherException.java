@@ -25,6 +25,7 @@ public class FlatFetcherException extends RuntimeException implements Serializab
 
 	static FlatFetcherException onAttr(String msg, Attribute<?, ?> metaAttr, @Nullable Throwable cause) {
 		return new FlatFetcherException(msg +
-				metaAttr.getDeclaringType().getJavaType().getSimpleName() + "#" + metaAttr.getJavaMember().getName(), cause);
+				PlanUtils.shortAttrDescription(metaAttr), cause);
 	}
+
 }

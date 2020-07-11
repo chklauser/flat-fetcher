@@ -14,7 +14,7 @@ import javax.persistence.metamodel.SingularAttribute;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ManyToOnePlan<X extends BaseEntity, A extends BaseEntity, K extends Serializable> implements FetchPlan<X> {
+public class ManyToOnePlan<X, A, K extends Serializable> implements FetchPlan<X, A> {
 
 	final EntityType<A> targetType;
 
@@ -45,7 +45,7 @@ public class ManyToOnePlan<X extends BaseEntity, A extends BaseEntity, K extends
 	}
 
 	@Override
-	public void fetch(EntityManager em, Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
 		Map<K, A> byId = new HashMap<>();
 		var cb = em.getCriteriaBuilder();
 		var assocQ = cb.createQuery(targetType.getJavaType());
@@ -68,5 +68,6 @@ public class ManyToOnePlan<X extends BaseEntity, A extends BaseEntity, K extends
 			// will not touch opposite because it is a collection from which we only have 1 element. There are no
 			// "partially lazy" collections in Hibernate.
 		}
+		return byId.values();
 	}
 }

@@ -146,7 +146,10 @@ abstract class Accessor<X, A> {
 		}
 		else {
 			var propIndex = ((UniqueKeyLoadable) entityEntry.getPersister()).getPropertyIndex(attr().getName());
-			entityEntry.getLoadedState()[propIndex] = value;
+			var loadedState = entityEntry.getLoadedState();
+			if(loadedState != null) {
+				loadedState[propIndex] = value;
+			}
 		}
 	}
 }

@@ -11,7 +11,6 @@ import javax.persistence.NamedSubgraph;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import link.klauser.flatfetcher.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -34,7 +33,7 @@ public class Engine extends BaseEntity {
     @Column
     int power;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false, mappedBy = "engine")
+    @OneToOne(fetch = FetchType.LAZY, optional = true, mappedBy = "engine")
     @LazyToOne(LazyToOneOption.NO_PROXY)
     @Access(AccessType.PROPERTY)
     Car car;

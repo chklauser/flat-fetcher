@@ -1,4 +1,4 @@
-package link.klauser.flatfetcher;
+package link.klauser.flatfetcher.model;
 
 import java.io.Serializable;
 import java.util.UUID;

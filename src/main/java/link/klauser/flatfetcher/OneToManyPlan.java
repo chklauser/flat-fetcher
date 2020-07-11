@@ -3,6 +3,7 @@ package link.klauser.flatfetcher;
 import static java.util.stream.Collectors.groupingBy;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +18,7 @@ import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
-class OneToManyPlan<X extends BaseEntity, C extends Collection<A>, A, K extends Serializable> implements FetchPlan<X> {
+class OneToManyPlan<X, C extends Collection<A>, A, K extends Serializable> implements FetchPlan<X, A> {
 
 	final PluralAttribute<? super X, C, A> fetchAttr;
 	final Accessor<? super X, C> rootField;
@@ -57,7 +58,7 @@ class OneToManyPlan<X extends BaseEntity, C extends Collection<A>, A, K extends 
 	}
 
 	@Override
-	public void fetch(EntityManager em, Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
 		var cb = em.getCriteriaBuilder();
 		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
 		Root<A> fromTarget = assocQ.from(targetType.getJavaType());
@@ -65,14 +66,17 @@ class OneToManyPlan<X extends BaseEntity, C extends Collection<A>, A, K extends 
 
 		Map<K, List<A>> byRootId = em.createQuery(assocQ).getResultStream()
 				.collect(groupingBy(mappedByIdAccessor::get));
+		var fetched = new ArrayList<A>();
 		for (X root : roots) {
 			var rootCollection = emptyCollectionSupplier.get();
 			rootField.set(em, root, rootCollection);
 			var children = byRootId.getOrDefault(rootIdAccessor.get(root), Collections.emptyList());
 			rootCollection.addAll(children);
+			fetched.addAll(children);
 			for (var child : children) {
 				mappedByAccessor.set(em, child, root);
 			}
 		}
+		return fetched;
 	}
 }
