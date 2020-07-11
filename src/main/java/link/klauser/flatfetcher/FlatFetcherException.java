@@ -17,26 +17,28 @@ package link.klauser.flatfetcher;
 import java.io.Serializable;
 import javax.persistence.metamodel.Attribute;
 
-
+/**
+ * Usually indicates an error during the introspection/reflection phase of the {@link FlatFetcher}.
+ */
 public class FlatFetcherException extends RuntimeException implements Serializable {
 
-	FlatFetcherException(String message) {
+	public FlatFetcherException(String message) {
 		super(message);
 	}
 
-	FlatFetcherException(String message, Throwable cause) {
+	public FlatFetcherException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	FlatFetcherException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	protected FlatFetcherException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	static FlatFetcherException onAttr(String msg, Attribute<?, ?> metaAttr) {
+	public static FlatFetcherException onAttr(String msg, Attribute<?, ?> metaAttr) {
 		return onAttr(msg, metaAttr, null);
 	}
 
-	static FlatFetcherException onAttr(String msg, Attribute<?, ?> metaAttr, Throwable cause) {
+	public static FlatFetcherException onAttr(String msg, Attribute<?, ?> metaAttr, Throwable cause) {
 		return new FlatFetcherException(msg +
 				PlanUtils.shortAttrDescription(metaAttr), cause);
 	}

@@ -14,6 +14,8 @@
 
 package link.klauser.flatfetcher;
 
+import static link.klauser.flatfetcher.PlanUtils.chunks;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,14 +65,16 @@ class OneToOneOppositePlan<X, A, K extends Serializable> implements FetchPlan<X,
 	}
 
 	@Override
-	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
-		// select t from Target t where t.mappedBy in (:roots)
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots, int batchSize) {
 		var cb = em.getCriteriaBuilder();
-		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
-		Root<A> fromTarget = assocQ.from(targetType.getJavaType());
-		assocQ.where(fromTarget.get(mappedByAccessor.singularAttr()).in(roots));
 		Map<K, A> byMappedById = new HashMap<>();
-		em.createQuery(assocQ).getResultStream().forEach(associated -> {
+		// select t from Target t where t.mappedBy in (:roots)
+		chunks(roots.stream(), batchSize).flatMap(rootsChunk -> {
+			CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
+			Root<A> fromTarget = assocQ.from(targetType.getJavaType());
+			assocQ.where(fromTarget.get(mappedByAccessor.singularAttr()).in(rootsChunk));
+			return em.createQuery(assocQ).getResultStream();
+		}).forEach(associated -> {
 			var id = mappedByIdAccessor.get(associated);
 			var previous = byMappedById.put(id, associated);
 			if (previous != null && previous != associated) {

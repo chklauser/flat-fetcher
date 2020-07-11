@@ -22,8 +22,13 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.persistence.JoinColumn;
 import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.EntityType;
@@ -106,5 +111,74 @@ final class PlanUtils {
 
 	static String shortAttrDescription(Attribute<?, ?> metaAttr) {
 		return metaAttr.getDeclaringType().getJavaType().getSimpleName() + "#" + metaAttr.getJavaMember().getName();
+	}
+
+	static <T> Stream<List<T>> chunks(Stream<T> sourceStream, int size) {
+		var source = sourceStream.spliterator();
+		return StreamSupport.stream(new ChunksSpliterator<T>(source, size), false);
+	}
+
+	private static class ChunksSpliterator<T> implements Spliterator<List<T>> {
+
+		final List<T> buf;
+
+		private final Spliterator<T> source;
+
+		private final int size;
+
+		public ChunksSpliterator(Spliterator<T> source, int size) {
+			if(size <= 0){
+				throw new IllegalArgumentException("Chunk size must be strictly positive.");
+			}
+			this.source = source;
+			this.size = size;
+			buf = new ArrayList<>(size);
+		}
+
+		@Override
+		public boolean tryAdvance(Consumer<? super List<T>> action) {
+			while (buf.size() < size) {
+				if (!source.tryAdvance(buf::add)) {
+					if (!buf.isEmpty()) {
+						action.accept(List.copyOf(buf));
+						buf.clear();
+						return true;
+					} else {
+						return false;
+					}
+				}
+			}
+			action.accept(List.copyOf(buf));
+			buf.clear();
+			return true;
+		}
+
+		@Override
+		public Spliterator<List<T>> trySplit() {
+			var innerSize = source.estimateSize();
+			if(innerSize == Long.MAX_VALUE || innerSize < size) {
+				return null;
+			}
+			var prefix = source.trySplit();
+			if(prefix == null){
+				return null;
+			}
+			return new ChunksSpliterator<>(prefix, size);
+		}
+
+		@Override
+		public long estimateSize() {
+			var sourceSize = source.estimateSize();
+			if(sourceSize == Long.MAX_VALUE){
+				return Long.MAX_VALUE;
+			}
+			return sourceSize / size + (sourceSize % size != 0 ? 1 : 0);
+		}
+
+		@Override
+		public int characteristics() {
+			var sourceCharacteristics = source.characteristics();
+			return NONNULL | ((ORDERED  | SIZED | SUBSIZED | DISTINCT | SORTED | IMMUTABLE | CONCURRENT) & sourceCharacteristics);
+		}
 	}
 }

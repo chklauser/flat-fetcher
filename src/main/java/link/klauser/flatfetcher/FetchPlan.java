@@ -19,5 +19,5 @@ import javax.persistence.EntityManager;
 
 @FunctionalInterface
 interface FetchPlan<X, A> {
-	Collection<A> fetch(EntityManager em, Collection<? extends X> roots);
+	Collection<A> fetch(EntityManager em, Collection<? extends X> roots, int batchSize);
 }

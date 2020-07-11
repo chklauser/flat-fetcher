@@ -16,6 +16,7 @@ package link.klauser.flatfetcher;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static link.klauser.flatfetcher.PlanUtils.chunks;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -87,14 +88,15 @@ class OneToOneOwningPlan<X, A, K extends Serializable> implements FetchPlan<X, A
 	}
 
 	@Override
-	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots, int batchSize) {
 		Map<K, A> byId = new HashMap<>();
 		var cb = em.getCriteriaBuilder();
-		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
-		Root<A> fromTarget = assocQ.from(targetType.getJavaType());
-		var targetIds = roots.stream().map(attrIdAccessor::get).collect(toList());
-		assocQ.where(fromTarget.get(targetIdAccessor.singularAttr()).in(targetIds));
-		em.createQuery(assocQ).getResultStream().forEach(associated -> {
+		chunks(roots.stream().map(attrIdAccessor::get), batchSize).flatMap(targetIds -> {
+			CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
+			Root<A> fromTarget = assocQ.from(targetType.getJavaType());
+			assocQ.where(fromTarget.get(targetIdAccessor.singularAttr()).in(targetIds));
+			return em.createQuery(assocQ).getResultStream();
+		}).forEach(associated -> {
 			var id = targetIdAccessor.get(associated);
 			var previous = byId.put(id, associated);
 			if (previous != null && previous != associated) {
