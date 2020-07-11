@@ -15,6 +15,7 @@
 package link.klauser.flatfetcher;
 
 import static java.util.stream.Collectors.groupingBy;
+import static link.klauser.flatfetcher.PlanUtils.chunks;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -72,14 +73,15 @@ class OneToManyPlan<X, C extends Collection<A>, A, K extends Serializable> imple
 	}
 
 	@Override
-	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots) {
+	public Collection<A> fetch(EntityManager em, Collection<? extends X> roots, int batchSize) {
 		var cb = em.getCriteriaBuilder();
-		CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
-		Root<A> fromTarget = assocQ.from(targetType.getJavaType());
-		assocQ.where(fromTarget.get(mappedByAccessor.singularAttr().getName()).in(roots));
+		Map<K, List<A>> byRootId = chunks(roots.stream(), batchSize).flatMap(rootsChunk -> {
+			CriteriaQuery<A> assocQ = cb.createQuery(targetType.getJavaType());
+			Root<A> fromTarget = assocQ.from(targetType.getJavaType());
+			assocQ.where(fromTarget.get(mappedByAccessor.singularAttr().getName()).in(rootsChunk));
+			return em.createQuery(assocQ).getResultStream();
+		}).collect(groupingBy(mappedByIdAccessor::get));
 
-		Map<K, List<A>> byRootId = em.createQuery(assocQ).getResultStream()
-				.collect(groupingBy(mappedByIdAccessor::get));
 		var fetched = new ArrayList<A>();
 		for (X root : roots) {
 			var rootCollection = emptyCollectionSupplier.get();
